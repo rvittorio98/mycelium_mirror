@@ -531,22 +531,14 @@
         function scratchLine(x1, y1, x2, y2, dist) {
 
             const CONFIG = getConfig();
+            const mobile = isMobile();
+
             // Logica Spessore
             let distFactor = Math.max(0.2, (CONFIG.connectDistance - dist) / 10);
             let finalThickness = appState.brushSize * distFactor;
 
             // IL SEGRETO DEL FRASTAGLIATO:
             let jitter = CONFIG.baseJitter + (finalThickness * CONFIG.jitterMultiplier);
-
-            if (appState.mode === 'positive') {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.strokeStyle = '#000000';
-                ctx.fillStyle = '#000000';
-            } else {
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.strokeStyle = 'rgba(0,0,0,1)';
-                ctx.fillStyle = 'rgba(0,0,0,1)';
-            }
 
             for (let i = 0; i < CONFIG.passes; i++) {
                 let jx1 = (Math.random() - 0.5) * jitter;
@@ -559,21 +551,67 @@
                     let px1 = x1 + jx1, py1 = y1 + jy1;
                     let px2 = x2 + jx2, py2 = y2 + jy2;
 
-                    ctx.beginPath();
-                    ctx.lineWidth = finalThickness;
-                    ctx.lineCap = 'square';
-                    ctx.lineJoin = 'bevel';
-                    ctx.moveTo(px1, py1);
-                    ctx.lineTo(px2, py2);
+                    if (appState.mode === 'positive') {
+                        if (mobile) {
+                            // MOBILE: Draw outline effect manually
+                            // Step 1: Draw thick outer stroke
+                            ctx.globalCompositeOperation = 'source-over';
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = finalThickness * 1.8;
+                            ctx.lineCap = 'square';
+                            ctx.lineJoin = 'bevel';
+                            ctx.beginPath();
+                            ctx.moveTo(px1, py1);
+                            ctx.lineTo(px2, py2);
+                            if (appState.mirrorEnabled) {
+                                ctx.moveTo(width - px1, py1);
+                                ctx.lineTo(width - px2, py2);
+                            }
+                            ctx.stroke();
 
-                    // MIRROR
-                    if (appState.mirrorEnabled) {
-                        let mx1 = width - px1;
-                        let mx2 = width - px2;
-                        ctx.moveTo(mx1, py1);
-                        ctx.lineTo(mx2, py2);
+                            // Step 2: Cut out center to create outline
+                            ctx.globalCompositeOperation = 'destination-out';
+                            ctx.lineWidth = finalThickness * 0.6;
+                            ctx.beginPath();
+                            ctx.moveTo(px1, py1);
+                            ctx.lineTo(px2, py2);
+                            if (appState.mirrorEnabled) {
+                                ctx.moveTo(width - px1, py1);
+                                ctx.lineTo(width - px2, py2);
+                            }
+                            ctx.stroke();
+                        } else {
+                            // DESKTOP: Normal drawing (filter does the outline)
+                            ctx.globalCompositeOperation = 'source-over';
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = finalThickness;
+                            ctx.lineCap = 'square';
+                            ctx.lineJoin = 'bevel';
+                            ctx.beginPath();
+                            ctx.moveTo(px1, py1);
+                            ctx.lineTo(px2, py2);
+                            if (appState.mirrorEnabled) {
+                                ctx.moveTo(width - px1, py1);
+                                ctx.lineTo(width - px2, py2);
+                            }
+                            ctx.stroke();
+                        }
+                    } else {
+                        // CUT mode
+                        ctx.globalCompositeOperation = 'destination-out';
+                        ctx.strokeStyle = 'rgba(0,0,0,1)';
+                        ctx.lineWidth = finalThickness;
+                        ctx.lineCap = 'square';
+                        ctx.lineJoin = 'bevel';
+                        ctx.beginPath();
+                        ctx.moveTo(px1, py1);
+                        ctx.lineTo(px2, py2);
+                        if (appState.mirrorEnabled) {
+                            ctx.moveTo(width - px1, py1);
+                            ctx.lineTo(width - px2, py2);
+                        }
+                        ctx.stroke();
                     }
-                    ctx.stroke();
                 }
             }
 
