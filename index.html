@@ -204,10 +204,10 @@
                 box-sizing: border-box;
             }
 
-            /* Try to keep filter on mobile with webkit prefix */
+            /* Disable SVG filter on mobile (iOS Safari limitation) */
             #canvas-container {
-                -webkit-filter: url(#jagged-edge);
-                filter: url(#jagged-edge);
+                filter: none;
+                -webkit-filter: none;
             }
 
             /* Show mobile header at top */
@@ -405,12 +405,16 @@
             ctx.restore();
         }
 
-        const CONFIG = {
-            connectDistance: 70, // Distanza di connessione
-            baseJitter: 4,       // Base del tremolio
-            jitterMultiplier: 0.8, // Quanto il tremolio aumenta con la dimensione
-            passes: 6            // Molti passaggi per creare "sporcizia"
-        };
+        // Check if mobile
+        const isMobile = () => window.innerWidth <= 768;
+
+        // Config with mobile adjustments (more jitter to compensate for no filter)
+        const getConfig = () => ({
+            connectDistance: isMobile() ? 50 : 70,
+            baseJitter: isMobile() ? 8 : 4,        // More jitter on mobile
+            jitterMultiplier: isMobile() ? 1.2 : 0.8,
+            passes: isMobile() ? 8 : 6             // More passes on mobile
+        });
 
         function resize() {
             width = window.innerWidth;
@@ -526,6 +530,7 @@
 
         function scratchLine(x1, y1, x2, y2, dist) {
 
+            const CONFIG = getConfig();
             // Logica Spessore
             let distFactor = Math.max(0.2, (CONFIG.connectDistance - dist) / 10);
             let finalThickness = appState.brushSize * distFactor;
@@ -590,7 +595,7 @@
                 const dist = Math.hypot(dx, dy);
 
                 // Aumenta distanza connessione con pennello grande per evitare buchi non voluti
-                let dynamicConnect = CONFIG.connectDistance + (appState.brushSize);
+                let dynamicConnect = getConfig().connectDistance + (appState.brushSize);
 
                 if (dist < dynamicConnect) {
                     scratchLine(prev.x, prev.y, p.x, p.y, dist);
