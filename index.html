@@ -204,9 +204,10 @@
                 box-sizing: border-box;
             }
 
-            /* Disable SVG filter on mobile (iOS Safari compatibility) */
+            /* Try to keep filter on mobile with webkit prefix */
             #canvas-container {
-                filter: none;
+                -webkit-filter: url(#jagged-edge);
+                filter: url(#jagged-edge);
             }
 
             /* Show mobile header at top */
