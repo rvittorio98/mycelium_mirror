@@ -204,6 +204,11 @@
                 box-sizing: border-box;
             }
 
+            /* Disable SVG filter on mobile (iOS Safari compatibility) */
+            #canvas-container {
+                filter: none;
+            }
+
             /* Show mobile header at top */
             #mobile-header {
                 display: flex;
@@ -383,8 +388,11 @@
             mirrorEnabled: true
         };
 
-        // Disegna la linea guida centrale
+        // Disegna la linea guida centrale (solo desktop)
         function drawGuideline() {
+            // Skip on mobile
+            if (window.innerWidth <= 768) return;
+
             ctx.save();
             ctx.setLineDash([10, 10]);
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
